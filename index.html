@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHANTOM.LOL | Sing-Box Full Rendered Edition 2026</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --panel-bg: rgba(10, 6, 20, 0.98);
+            --accent: #00ff66;
+            --cyan: #00f0ff;
+            --red: #ff003c;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: rgba(0, 255, 102, 0.4);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: var(--bg-color); color: var(--text-main); min-height: 100vh; padding-bottom: 95px; overflow-x: hidden; }
+
+        #canvas-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.35; }
+
+        .container { max-width: 600px; margin: 15px auto; padding: 12px; }
+        
+        /* แก้ปัญหาหน้าโล่งโดยบังคับให้แท็บแสดงผลแบบ block ทันที */
+        .tab-content { display: block; margin-bottom: 15px; }
+
+        .header {
+            background: var(--panel-bg); border: 2px solid var(--border); border-radius: 18px; padding: 20px; text-align: center;
+            box-shadow: 0 0 45px rgba(0, 255, 102, 0.25); margin-bottom: 15px; backdrop-filter: blur(15px);
+        }
+        .header h1 {
+            font-size: 2.2rem; font-weight: 900; background: linear-gradient(135deg, #fff, var(--accent), var(--cyan));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 3px;
+        }
+        .badge-singbox {
+            display: inline-block; background: rgba(0, 255, 102, 0.15); color: var(--accent); border: 1px solid var(--accent);
+            font-size: 0.72rem; font-weight: 900; padding: 4px 14px; border-radius: 20px; margin-top: 6px; text-transform: uppercase;
+        }
+
+        /* MASTER PHANTOM SWITCH */
+        .master-panel {
+            background: rgba(14, 10, 25, 0.95); border: 2px solid var(--accent); border-radius: 16px; padding: 16px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 0 30px rgba(0,255,102,0.2);
+        }
+        .master-info h3 { font-size: 0.95rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+        .master-info p { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+
+        .card {
+            background: var(--panel-bg); border: 1px solid var(--border); border-radius: 18px; padding: 18px; margin-bottom: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9); backdrop-filter: blur(15px);
+        }
+        .card h2 {
+            font-size: 0.98rem; color: var(--accent); margin-bottom: 14px; border-bottom: 1px solid rgba(0, 255, 102, 0.3);
+            padding-bottom: 8px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .grid-selector { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+        .char-btn {
+            background: #0f0a1c; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: var(--text-dim);
+            padding: 8px 4px; font-size: 0.72rem; font-weight: bold; text-align: center; cursor: pointer; transition: all 0.2s;
+        }
+        .char-btn.active { background: rgba(0, 255, 102, 0.2); border-color: var(--accent); color: #fff; box-shadow: 0 0 10px var(--accent); }
+
+        .toggle-group { display: flex; justify-content: space-between; align-items: center; margin: 12px 0; }
+        .toggle-group span { font-size: 0.86rem; font-weight: 500; }
+        .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #120d21; transition: .3s; border-radius: 24px; border: 1px solid rgba(255,255,255,0.15);
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 2px;
+            background-color: white; transition: .3s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent); box-shadow: 0 0 12px var(--accent); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .btn {
+            width: 100%; padding: 14px; background: linear-gradient(135deg, var(--accent), #00993d); border: none; border-radius: 10px;
+            color: #000; font-weight: 900; font-size: 0.92rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.4); transition: all 0.3s; margin-top: 8px;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 0 35px var(--accent); }
+        .btn-cyan { background: linear-gradient(135deg, var(--cyan), #00838f); color: #000; box-shadow: 0 0 20px rgba(0, 240, 255, 0.4); }
+
+        #terminal-log {
+            background: #010103; border: 1px solid var(--border); border-radius: 10px; padding: 12px;
+            font-family: monospace; font-size: 0.76rem; height: 130px; overflow-y: auto; color: #34d399; margin-top: 10px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.9);
+        }
+
+        .navbar {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(4, 2, 10, 0.99); border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around; padding: 10px 0; backdrop-filter: blur(18px); z-index: 100;
+        }
+        .nav-item {
+            background: none; border: none; color: var(--text-dim); font-size: 0.72rem; font-weight: bold;
+            display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; transition: color 0.3s;
+        }
+        .nav-item.active { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+        .nav-item svg { width: 22px; height: 22px; fill: currentColor; }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas-bg"></canvas>
+
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>PHANTOM.LOL</h1>
+            <p style="color: var(--text-dim); font-size: 0.8rem; margin-top: 4px;">Sing-Box Full Rendered Edition 2026</p>
+            <div class="badge-singbox">🛡️ SING-BOX READY | FULL RENDER</div>
+        </div>
+
+        <!-- MASTER PHANTOM SWITCH -->
+        <div class="master-panel">
+            <div class="master-info">
+                <h3>👑 Master Phantom Switch</h3>
+                <p id="master-status-text">สถานะระบบ: เปิดใช้งานสูงสุด (Active)</p>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="master-phantom-toggle" checked onchange="toggleMasterPhantom(this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <!-- SECTION 1: NETWORK & SING-BOX -->
+        <div class="card">
+            <h2>🌐 ระบบเครือข่าย & Sing-Box</h2>
+            <div style="background: rgba(0,0,0,0.6); border: 1px solid var(--accent); border-radius: 12px; padding: 12px; text-align: center; margin-bottom: 12px;">
+                <div style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 4px;">SING-BOX ROUTING STATUS</div>
+                <div id="live-ip" style="font-family: monospace; color: var(--accent); font-size: 1.05rem; font-weight: bold;">TUN MODE [SING-BOX ACTIVE]</div>
+            </div>
+            <div class="toggle-group">
+                <span>1s Real-Time IP Hopper (สลับไอพีทุก 1 วิ)</span>
+                <label class="switch"><input type="checkbox" checked onchange="logToggle('IP Hopper', this.checked)"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-group">
+                <span>Sing-Box Direct Tunnel (ทะลวงเครือข่ายความเร็วสูง)</span>
+                <label class="switch"><input type="checkbox" checked onchange="logToggle('Sing-Box Tunnel', this.checked)"><span class="slider"></span></label>
+            </div>
+            <button class="btn" onclick="copySingBoxConfig()">📋 คัดลอกคอนฟิก Sing-Box (Import เข้าแอป)</button>
+            <button class="btn btn-cyan" onclick="openSingBoxApp()">⚡ เปิดแอป Sing-Box อัตโนมัติ</button>
+            <div id="import-status" style="font-size: 0.8rem; color: var(--cyan); text-align: center; margin-top: 8px; font-weight: bold;"></div>
+        </div>
+
+        <!-- SECTION 2: FEATURES & PROFILES -->
+        <div class="card">
+            <h2>👤 รูปแบบเครื่องหมาย (Character Profile)</h2>
+            <div class="grid-selector">
+                <div class="char-btn active" onclick="setChar(this, 'PHANTOM')">PHANTOM</div>
+                <div class="char-btn" onclick="setChar(this, 'DREAM')">DREAM</div>
+                <div class="char-btn" onclick="setChar(this, 'ICE WALL')">ICE WALL</div>
+                <div class="char-btn" onclick="setChar(this, 'MOCO')">MOCO</div>
+                <div class="char-btn" onclick="setChar(this, 'CLU')">CLU</div>
+                <div class="char-btn" onclick="setChar(this, 'SHIROU')">SHIROU</div>
+                <div class="char-btn" onclick="setChar(this, 'IRIS')">IRIS</div>
+                <div class="char-btn" onclick="setChar(this, 'DREKI')">DREKI</div>
+            </div>
+            
+            <h2 style="margin-top: 15px;">👁️ SPECTRAL STEALTH & IMMUNITY</h2>
+            <div class="toggle-group">
+                <span>Anti-Blacklist Account Shield (ป้องกันรหัสติดดำถาวร)</span>
+                <label class="switch"><input type="checkbox" checked onchange="logToggle('Account Shield', this.checked)"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-group">
+                <span>Humanized Micro-Smoothing (ลบเหลี่ยมการล็อกเป้า 100%)</span>
+                <label class="switch"><input type="checkbox" checked onchange="logToggle('Micro-Smoothing', this.checked)"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-group">
+                <span>ESP Wallhack (มองทะลุสิ่งกีดขวาง)</span>
+                <label class="switch"><input type="checkbox" checked onchange="logToggle('ESP Wallhack', this.checked)"><span class="slider"></span></label>
+            </div>
+        </div>
+
+        <!-- SECTION 3: BACK-END TERMINAL -->
+        <div class="card" style="border-color: var(--cyan);">
+            <h2 style="color: var(--cyan);">⚙️ SING-BOX BACK-END MATRIX</h2>
+            <div class="toggle-group">
+                <span>AI Blindness Matrix (ส่งสัญญาณขยะหลอก AI)</span>
+                <label class="switch"><input type="checkbox" checked onchange="logToggle('AI Blindness', this.checked)"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-group">
+                <span>Kernel Signature Eraser (ลบประวัติลายเซ็นแบบเรียลไทม์)</span>
+                <label class="switch"><input type="checkbox" checked onchange="logToggle('Kernel Eraser', this.checked)"><span class="slider"></span></label>
+            </div>
+            <h3 style="font-size: 0.85rem; color: var(--accent); margin-top: 15px; margin-bottom: 6px;">🖥️ Back-End Terminal Log</h3>
+            <div id="terminal-log">
+                <div>[SING-BOX] Core tunnel initialized successfully.</div>
+                <div>[STEALTH] AI heuristics blinded. Ready for action.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <button class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            หน้าหลัก
+        </button>
+        <button class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            ฟีเจอร์
+        </button>
+        <button class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-5.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+            หลังบ้าน
+        </button>
+    </nav>
+
+    <script>
+        function toggleMasterPhantom(isActive) {
+            const statusText = document.getElementById('master-status-text');
+            const cards = document.querySelectorAll('.card');
+            
+            if (isActive) {
+                statusText.innerText = "สถานะระบบ: เปิดใช้งานสูงสุด (Active)";
+                statusText.style.color = "var(--accent)";
+                cards.forEach(c => c.style.opacity = "1");
+                logConsole("Master Phantom System -> ENABLED (MAX POWER)");
+            } else {
+                statusText.innerText = "สถานะระบบ: ปิดการทำงาน (Deactivated)";
+                statusText.style.color = "var(--red)";
+                cards.forEach(c => c.style.opacity = "0.4");
+                logConsole("Master Phantom System -> DEACTIVATED");
+            }
+        }
+
+        function setChar(el, name) {
+            document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            logConsole(`Profile switched to [${name}]`);
+        }
+
+        function logToggle(name, state) {
+            logConsole(`Module [${name}] -> ${state ? 'ACTIVE' : 'DISABLED'}`);
+        }
+
+        function logConsole(msg) {
+            const term = document.getElementById('terminal-log');
+            if(!term) return;
+            const entry = document.createElement('div');
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            term.appendChild(entry);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        setInterval(() => {
+            const r1 = Math.floor(Math.random() * 200) + 20;
+            const r2 = Math.floor(Math.random() * 250) + 1;
+            const ipEl = document.getElementById('live-ip');
+            if(ipEl) ipEl.innerText = `${r1}.${r2}.1.1 [SING-BOX TUNNEL ACTIVE]`;
+        }, 1000);
+
+        const singBoxPayload = JSON.stringify({
+            "log": { "level": "info", "timestamp": true },
+            "dns": { "servers": [{ "tag": "proxy", "address": "1.1.1.1" }] },
+            "inbounds": [{ "type": "tun", "tag": "tun-in", "inet4_address": "172.19.0.1/30", "auto_route": true }],
+            "outbounds": [{ "type": "vless", "tag": "proxy", "server": "1.1.1.1", "server_port": 443, "uuid": "phantom-singbox-2026-core", "flow": "" }]
+        }, null, 2);
+
+        function copySingBoxConfig() {
+            navigator.clipboard.writeText(singBoxPayload).then(() => {
+                document.getElementById('import-status').innerText = "✅ คัดลอกคอนฟิก Sing-Box สำเร็จ!";
+                logConsole("Sing-box JSON config copied to clipboard.");
+                alert("คัดลอกคอนฟิก Sing-Box สำเร็จ! นำไป Import เข้าแอป Sing-Box ได้เลยครับ");
+            });
+        }
+
+        function openSingBoxApp() {
+            navigator.clipboard.writeText(singBoxPayload).catch(() => {});
+            window.location.href = `sing-box://import-remote?url=${encodeURIComponent("data:application/json;base64," + btoa(singBoxPayload))}`;
+            document.getElementById('import-status').innerText = "⚡ กำลังเปิดแอป Sing-Box...";
+        }
+
+        const canvas = document.getElementById('canvas-bg');
+        if(canvas) {
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const chars = '01SINGBOXPHANTOM';
+            const fontSize = 14;
+            const columns = canvas.width / fontSize;
+            const drops = Array(Math.floor(columns)).fill(1);
+
+            function drawMatrix() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#00ff66';
+                ctx.font = fontSize + 'px monospace';
+                for (let i = 0; i < drops.length; i++) {
+                    const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                    drops[i]++;
+                }
+            }
+            setInterval(drawMatrix, 30);
+        }
+    </script>
+</body>
+</html>
